@@ -54,7 +54,7 @@ void ACoreController::SetupInputComponent() {
 		EIC->BindAction(MoveChrAction, ETriggerEvent::Triggered, this, &ACoreController::MoveChr);
 
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACoreController::BeginJump);
-		EIC->BindAction(JumpAction, ETriggerEvent::Canceled, this, &ACoreController::EndJump);		
+		EIC->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACoreController::EndJump);		
 	}
 }
 
@@ -84,7 +84,7 @@ void ACoreController::BeginJump()
 		Chr->JumpMaxHoldTime = 0.0f;
 	} else {
 		Chr->GetCharacterMovement()->JumpZVelocity = 420.0f;
-		Chr->JumpMaxHoldTime = 0.125f;
+		Chr->JumpMaxHoldTime = 0.025f;
 	}
 	
 	Chr->Jump();
