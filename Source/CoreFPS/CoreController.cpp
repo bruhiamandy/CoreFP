@@ -9,6 +9,7 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 ACoreController::ACoreController() {
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCClassFinder(
@@ -25,12 +26,13 @@ ACoreController::ACoreController() {
 
 void ACoreController::BeginPlay() {
 	Super::BeginPlay();
-
-	/*
+	if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) {
+		InputSubsystem->AddMappingContext(DefaultMappingContext, 0);
+	}
+	
 	Sensitivity = GetSensitivity();
 	SensitivityYaw = GetSensitivityYaw();
 	SensitivityPitch = GetSensitivityPitch();
-	*/
 }
 
 void ACoreController::Tick(float DeltaTime) {
@@ -42,6 +44,10 @@ void ACoreController::SetupInputComponent() {
 	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent)) {
 		EIC->BindAction(MoveCamAction, ETriggerEvent::Triggered, this, &ACoreController::MoveCam);
 		EIC->BindAction(MoveChrAction, ETriggerEvent::Triggered, this, &ACoreController::MoveChr);
+
+		UE_LOG(LogTemp, Warning, TEXT("EIC has been set up and binding was completed."))
+	} else {
+		UE_LOG(LogTemp, Error, TEXT("EIC is not set up correctly. Binding will not proceed."))
 	}
 }
 
@@ -50,6 +56,8 @@ void ACoreController::MoveChr(const FInputActionValue& Value) {
 
 	GetPawn()->AddMovementInput(GetPawn()->GetActorRightVector(), MoveVec.X);
 	GetPawn()->AddMovementInput(GetPawn()->GetActorForwardVector(), MoveVec.Y);
+
+	UE_LOG(LogTemp, Warning, TEXT("Moving Character."))
 }
 
 float ACoreController::GetSensitivity() {
@@ -69,4 +77,6 @@ void ACoreController::MoveCam(const FInputActionValue& Value) {
 	
 	AddYawInput(CamVec.X * SensitivityYaw * GetWorld()->GetDeltaSeconds());
 	AddPitchInput(CamVec.Y * SensitivityPitch * GetWorld()->GetDeltaSeconds());
+	
+	UE_LOG(LogTemp, Warning, TEXT("Moving Camera."))
 }
