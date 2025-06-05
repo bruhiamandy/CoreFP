@@ -13,6 +13,7 @@ class COREFPS_API ACoreCharacter : public ACharacter
 
 public:
 	ACoreCharacter();
+	UFUNCTION() UCameraComponent* GetCamera() { return Camera; };
 
 protected:
 	virtual void BeginPlay() override;

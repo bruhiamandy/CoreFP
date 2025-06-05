@@ -24,7 +24,9 @@ public:
 
 	void MoveCam(const FInputActionValue& Value);
 	void MoveChr(const FInputActionValue& Value);
-
+	void BeginJump();
+	void EndJump();
+	
 	static float GetSensitivity();
 	static float GetSensitivityYaw();
 	static float GetSensitivityPitch();
@@ -35,9 +37,10 @@ protected:
 	virtual void SetupInputComponent() override;
 
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputMappingContext* DefaultMappingContext;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* MoveCamAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true")) UInputAction* MoveChrAction;
+	UPROPERTY() UInputMappingContext* DefaultMappingContext;
+	UPROPERTY() UInputAction* MoveCamAction;
+	UPROPERTY() UInputAction* MoveChrAction;
+	UPROPERTY() UInputAction* JumpAction;
 
 	UPROPERTY() float Sensitivity = 1.2f;
 	UPROPERTY() float SensitivityYaw = 1.2f;
