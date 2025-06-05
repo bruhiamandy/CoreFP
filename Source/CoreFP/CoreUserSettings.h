@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class COREFPS_API UCoreUserSettings : public UGameUserSettings
+class COREFP_API UCoreUserSettings : public UGameUserSettings
 {
 	GENERATED_BODY()
 

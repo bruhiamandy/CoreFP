@@ -7,7 +7,7 @@
 class UCameraComponent;
 
 UCLASS()
-class COREFPS_API ACoreCharacter : public ACharacter
+class COREFP_API ACoreCharacter : public ACharacter
 {
 	GENERATED_BODY()
 

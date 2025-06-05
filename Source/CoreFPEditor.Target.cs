@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class CoreFPSTarget : TargetRules
+public class CoreFPEditorTarget : TargetRules
 {
-	public CoreFPSTarget(TargetInfo Target) : base(Target)
+	public CoreFPEditorTarget( TargetInfo Target) : base(Target)
 	{
-		Type = TargetType.Game;
+		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V4;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
-		ExtraModuleNames.Add("CoreFPS");
+		ExtraModuleNames.Add("CoreFP");
 	}
 }

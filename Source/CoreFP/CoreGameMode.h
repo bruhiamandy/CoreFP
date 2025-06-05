@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class COREFPS_API ACoreGameMode : public AGameMode
+class COREFP_API ACoreGameMode : public AGameMode
 {
 	GENERATED_BODY()
 

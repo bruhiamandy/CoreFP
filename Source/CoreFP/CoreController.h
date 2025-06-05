@@ -15,7 +15,7 @@ struct FInputActionValue;
  * 
  */
 UCLASS()
-class COREFPS_API ACoreController : public APlayerController
+class COREFP_API ACoreController : public APlayerController
 {
 	GENERATED_BODY()
 

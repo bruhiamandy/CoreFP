@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class CoreFPS : ModuleRules
+public class CoreFP : ModuleRules
 {
-	public CoreFPS(ReadOnlyTargetRules Target) : base(Target)
+	public CoreFP(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
