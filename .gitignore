@@ -71,3 +71,4 @@ enc_temp_folder/
 .ignore
 
 Decay.sln.DotSettings.user
+.DS_Store
