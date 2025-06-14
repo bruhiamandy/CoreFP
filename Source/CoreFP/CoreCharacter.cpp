@@ -11,6 +11,7 @@
 ACoreCharacter::ACoreCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	
 	GetCharacterMovement()->AirControl = 0.5f;
 

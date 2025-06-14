@@ -14,6 +14,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/CapsuleComponent.h"
 
 ACoreController::ACoreController() {
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCClassFinder(
@@ -24,11 +25,17 @@ ACoreController::ACoreController() {
 		TEXT("/Game/Inputs/IA_MoveChr.IA_MoveChr"));
 	static ConstructorHelpers::FObjectFinder<UInputAction> JumpAClassFinder(
 		TEXT("/Game/Inputs/IA_Jump.IA_Jump"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> CrouchAClassFinder(
+		TEXT("/Game/Inputs/IA_Crouch.IA_Crouch"));
+	static ConstructorHelpers::FObjectFinder<UCurveFloat> CrouchCurveClassFinder(
+		TEXT("/Game/Blueprints/Curves/C_Crouch.C_Crouch"));
 
 	DefaultMappingContext = IMCClassFinder.Object;
 	MoveCamAction = MCamAClassFinder.Object;
 	MoveChrAction = MChrAClassFinder.Object;
 	JumpAction = JumpAClassFinder.Object;
+	CrouchAction = CrouchAClassFinder.Object;
+	CrouchCurve = CrouchCurveClassFinder.Object;
 }
 
 void ACoreController::BeginPlay() {
@@ -40,6 +47,8 @@ void ACoreController::BeginPlay() {
 	Sensitivity = GetSensitivity();
 	SensitivityYaw = GetSensitivityYaw();
 	SensitivityPitch = GetSensitivityPitch();
+
+	BindCrouch();
 }
 
 void ACoreController::Tick(float DeltaTime) {
@@ -54,7 +63,10 @@ void ACoreController::SetupInputComponent() {
 		EIC->BindAction(MoveChrAction, ETriggerEvent::Triggered, this, &ACoreController::MoveChr);
 
 		EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACoreController::BeginJump);
-		EIC->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACoreController::EndJump);		
+		EIC->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACoreController::EndJump);
+
+		EIC->BindAction(CrouchAction, ETriggerEvent::Started, this, &ACoreController::BeginCrouch);
+		EIC->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ACoreController::EndCrouch);
 	}
 }
 
@@ -66,8 +78,7 @@ void ACoreController::MoveChr(const FInputActionValue& Value)
 	GetPawn()->AddMovementInput(GetPawn()->GetActorForwardVector(), MoveVec.Y);
 }
 
-void ACoreController::BeginJump()
-{
+void ACoreController::BeginJump() {
 	ACoreCharacter* Chr = GetPawn<ACoreCharacter>();
 	
 	FVector CamLoc = Chr->GetCamera()->GetComponentLocation();
@@ -90,10 +101,45 @@ void ACoreController::BeginJump()
 	Chr->Jump();
 }
 
-void ACoreController::EndJump()
-{
+void ACoreController::EndJump() {
 	ACoreCharacter* Chr = GetPawn<ACoreCharacter>();
 	Chr->StopJumping();
+}
+
+void ACoreController::BindCrouch() {
+	ACoreCharacter* Chr = GetPawn<ACoreCharacter>();
+	WalkHeight = Chr->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	
+	if (CrouchCurve) {
+		FOnTimelineFloat Progress;
+		Progress.BindUFunction(this, FName("UpdateCrouch"));
+		CrouchTimeline.AddInterpFloat(CrouchCurve, Progress);
+	}
+}
+
+void ACoreController::BeginCrouch() {
+	ACoreCharacter* Chr = GetPawn<ACoreCharacter>();
+	if (Chr->CanCrouch() && !CrouchTimeline.IsPlaying() && Chr->GetCharacterMovement()->IsMovingOnGround()) {
+		CrouchTimeline.Play();
+		bIsCrouching = true;
+	}
+}
+
+void ACoreController::UpdateCrouch(float Alpha) {
+	ACoreCharacter* Chr = GetPawn<ACoreCharacter>();
+	
+	const float Target = bIsCrouching ? CrouchHeight : WalkHeight;
+	const float Height = FMath::Lerp(WalkHeight, Target, Alpha);
+
+	Chr->GetCapsuleComponent()->SetCapsuleHalfHeight(Height);
+	Chr->GetCharacterMovement()->bWantsToCrouch = bIsCrouching;
+}
+
+void ACoreController::EndCrouch() {
+	if (CrouchTimeline.IsPlaying() || bIsCrouching) {
+		CrouchTimeline.Reverse();
+		bIsCrouching = false;
+	}
 }
 
 float ACoreController::GetSensitivity() {

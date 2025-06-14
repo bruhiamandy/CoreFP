@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "CoreController.generated.h"
 
@@ -26,6 +27,11 @@ public:
 	void MoveChr(const FInputActionValue& Value);
 	void BeginJump();
 	void EndJump();
+
+	void BindCrouch();
+	void BeginCrouch();
+	void UpdateCrouch(float Alpha);
+	void EndCrouch();
 	
 	static float GetSensitivity();
 	static float GetSensitivityYaw();
@@ -41,8 +47,18 @@ private:
 	UPROPERTY() UInputAction* MoveCamAction;
 	UPROPERTY() UInputAction* MoveChrAction;
 	UPROPERTY() UInputAction* JumpAction;
+	UPROPERTY() UInputAction* CrouchAction;
 
 	UPROPERTY() float Sensitivity = 1.2f;
 	UPROPERTY() float SensitivityYaw = 1.2f;
 	UPROPERTY() float SensitivityPitch = 1.2f;
+
+	UPROPERTY() bool bIsCrouching = false;
+	
+	UPROPERTY() float WalkHeight;
+	UPROPERTY() float CrouchHeight = 45.0f;
+	UPROPERTY() float CrouchSpeed = 10.0f;
+	
+	UPROPERTY() UCurveFloat* CrouchCurve;
+	UPROPERTY() FTimeline CrouchTimeline;
 };
