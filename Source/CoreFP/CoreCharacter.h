@@ -13,7 +13,12 @@ class COREFP_API ACoreCharacter : public ACharacter
 
 public:
 	ACoreCharacter();
+    
 	UFUNCTION() UCameraComponent* GetCamera() { return Camera; };
+    
+    UFUNCTION() float GetWalkSpeed() { return WalkSpeed; }
+    UFUNCTION() float GetSprintSpeed() { return SprintSpeed; }
+    UFUNCTION() float GetCrouchSpeed() { return CrouchSpeed; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -24,4 +29,8 @@ protected:
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;
+    
+    UPROPERTY() float WalkSpeed = 250.0f;
+    UPROPERTY() float SprintSpeed = 500.0f;
+    UPROPERTY() float CrouchSpeed = 125.0f;
 };
