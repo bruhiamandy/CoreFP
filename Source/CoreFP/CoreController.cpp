@@ -120,8 +120,11 @@ void ACoreController::BindCrouch() {
 void ACoreController::BeginCrouch() {
 	ACoreCharacter* Chr = GetPawn<ACoreCharacter>();
 	if (Chr->CanCrouch() && !CrouchTimeline.IsPlaying() && Chr->GetCharacterMovement()->IsMovingOnGround()) {
-		CrouchTimeline.Play();
-		bIsCrouching = true;
+        if (Chr->GetCharacterMovement()->MaxWalkSpeed >= Chr->GetSprintSpeed()) {
+            Chr->GetCharacterMovement()->MaxWalkSpeed = Chr->GetCrouchSpeed();
+        }
+        bIsCrouching = true;
+        CrouchTimeline.Play();
 	}
 }
 
