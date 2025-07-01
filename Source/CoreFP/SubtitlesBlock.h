@@ -14,5 +14,11 @@ UCLASS()
 class COREFP_API USubtitlesBlock : public UTextBlock, public ISubtitlesInterface
 {
 	GENERATED_BODY()
-	
+
+public:
+	USubtitlesBlock(const FObjectInitializer& ObjectInitializer);
+
+	virtual void UpdateSubtitleText(const FText& SubtitleText) override;
+
+	UPROPERTY(BlueprintAssignable, Category="Hook") FSubtitleUpdate OnSubtitleUpdate;
 };

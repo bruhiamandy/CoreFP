@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "SubtitlesInterface.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSubtitleUpdate, const FText&, SubtitleText);
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI, BlueprintType, meta=(CannotImplementInterfaceInBlueprint))
 class USubtitlesInterface : public UInterface
