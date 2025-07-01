@@ -11,8 +11,8 @@
 #include "GameFramework/Actor.h"
 
 ACoreGameMode::ACoreGameMode() {
-//	static ConstructorHelpers::FClassFinder<APawn> PlayerChrClassFinder(TEXT("/Game/Blueprints/Character"));
-	DefaultPawnClass = ACoreCharacter::StaticClass();
+    static ConstructorHelpers::FObjectFinder<UBlueprint> PawnChr(TEXT("/Game/Blueprints/BP_PlayerCharacter.BP_PlayerCharacter"));
+    DefaultPawnClass = (UClass*)PawnChr.Object->GeneratedClass;
 	PlayerControllerClass = ACoreController::StaticClass();
 }
 
@@ -20,3 +20,4 @@ void ACoreGameMode::BeginPlay() {
 	Super::BeginPlay();
 	
 }
+

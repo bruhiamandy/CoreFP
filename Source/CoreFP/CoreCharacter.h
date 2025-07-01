@@ -16,9 +16,12 @@ public:
     
 	UFUNCTION() UCameraComponent* GetCamera() { return Camera; };
     
-    UFUNCTION() float GetWalkSpeed() { return WalkSpeed; }
-    UFUNCTION() float GetSprintSpeed() { return SprintSpeed; }
-    UFUNCTION() float GetCrouchSpeed() { return CrouchSpeed; }
+    UFUNCTION(BlueprintPure) float GetWalkSpeed() { return WalkSpeed; }
+    UFUNCTION(BlueprintPure) float GetSprintSpeed() { return SprintSpeed; }
+    UFUNCTION(BlueprintPure) float GetCrouchSpeed() { return CrouchSpeed; }
+    
+    UFUNCTION(BlueprintPure) bool bIsCrouching() { return bIsChrCrouching; }
+    UFUNCTION(BlueprintCallable) void SetCrouch(bool bCrouching) { bIsChrCrouching = bCrouching; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,4 +36,6 @@ private:
     UPROPERTY() float WalkSpeed = 250.0f;
     UPROPERTY() float SprintSpeed = 500.0f;
     UPROPERTY() float CrouchSpeed = 125.0f;
+    
+    UPROPERTY() bool bIsChrCrouching;
 };
