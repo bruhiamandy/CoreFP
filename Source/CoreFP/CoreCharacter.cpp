@@ -2,6 +2,7 @@
 
 
 #include "CoreCharacter.h"
+#include "CoreUserSettings.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -25,7 +26,8 @@ ACoreCharacter::ACoreCharacter() {
 // Called when the game starts or when spawned
 void ACoreCharacter::BeginPlay() {
 	Super::BeginPlay();
-	
+    UCoreUserSettings* Settings = Cast<UCoreUserSettings>(UCoreUserSettings::GetCoreUserSettings());
+    Camera->SetFieldOfView(Settings->GetCameraFOV());
 }
 
 void ACoreCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
@@ -48,3 +50,20 @@ void ACoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 }
 
+void ACoreCharacter::BeginRun() {
+    if(!IsCrouching()) {
+        if(!GetCharacterMovement()->IsFalling()) {
+            GetCharacterMovement()->MaxWalkSpeed = GetSprintSpeed();
+            SetRunning(true);
+        }
+    }
+    
+    EndRun();
+}
+
+void ACoreCharacter::EndRun() {
+    if(IsRunning()) {
+        GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
+        SetRunning(false);
+    }
+}

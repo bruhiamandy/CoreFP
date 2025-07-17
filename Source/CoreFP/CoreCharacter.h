@@ -20,15 +20,21 @@ public:
     UFUNCTION(BlueprintPure) float GetSprintSpeed() { return SprintSpeed; }
     UFUNCTION(BlueprintPure) float GetCrouchSpeed() { return CrouchSpeed; }
     
-    UFUNCTION(BlueprintPure) bool bIsCrouching() { return bIsChrCrouching; }
-    UFUNCTION(BlueprintCallable) void SetCrouch(bool bCrouching) { bIsChrCrouching = bCrouching; }
-
+    UFUNCTION(BlueprintPure) bool IsCrouching() { return bIsCrouching; }
+    UFUNCTION(BlueprintCallable) void SetCrouch(bool bCrouching) { bIsCrouching = bCrouching; }
+    
+    UFUNCTION(BlueprintPure) bool IsRunning() { return bIsRunning; }
+    UFUNCTION() void SetRunning(bool bRunning) { bIsRunning = bRunning; }
+    
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Landed(const FHitResult& Hit) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    
+    void BeginRun();
+    void EndRun();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;
@@ -37,5 +43,6 @@ private:
     UPROPERTY() float SprintSpeed = 500.0f;
     UPROPERTY() float CrouchSpeed = 125.0f;
     
-    UPROPERTY() bool bIsChrCrouching;
+    UPROPERTY() bool bIsCrouching;
+    UPROPERTY() bool bIsRunning;
 };
