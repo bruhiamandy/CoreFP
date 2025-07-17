@@ -4,6 +4,11 @@
 #include "GameFramework/Character.h"
 #include "CoreCharacter.generated.h"
 
+class UInputAction;
+class UInputMappingContext;
+
+struct FInputActionValue;
+
 class UCameraComponent;
 
 UCLASS()
@@ -37,6 +42,9 @@ protected:
     void EndRun();
 
 private:
+    UPROPERTY() UInputMappingContext* DefaultMappingContext;
+    UPROPERTY() UInputAction* RunAction;
+    
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;
     
     UPROPERTY() float WalkSpeed = 250.0f;
