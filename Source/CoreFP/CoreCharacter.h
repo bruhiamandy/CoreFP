@@ -20,7 +20,8 @@ public:
 	ACoreCharacter();
     
 	UFUNCTION() UCameraComponent* GetCamera() { return Camera; };
-    
+
+	UFUNCTION(BlueprintPure) float GetCurrentSpeed();
     UFUNCTION(BlueprintPure) float GetWalkSpeed() { return WalkSpeed; }
     UFUNCTION(BlueprintPure) float GetSprintSpeed() { return SprintSpeed; }
     UFUNCTION(BlueprintPure) float GetCrouchSpeed() { return CrouchSpeed; }
@@ -30,6 +31,18 @@ public:
     
     UFUNCTION(BlueprintPure) bool IsRunning() { return bIsRunning; }
     UFUNCTION() void SetRunning(bool bRunning) { bIsRunning = bRunning; }
+
+	void MoveCam(const FInputActionValue& Value);
+	void MoveChr(const FInputActionValue& Value);
+	void BeginJump();
+	void EndJump();
+
+	void BeginRun();
+	void EndRun();
+
+	static float GetSensitivity();
+	static float GetSensitivityYaw();
+	static float GetSensitivityPitch();
     
 protected:
 	virtual void BeginPlay() override;
@@ -37,12 +50,13 @@ protected:
 	virtual void Landed(const FHitResult& Hit) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-    
-    void BeginRun();
-    void EndRun();
 
 private:
     UPROPERTY() UInputMappingContext* DefaultMappingContext;
+    UPROPERTY() UInputAction* MoveCamAction;
+    UPROPERTY() UInputAction* MoveChrAction;
+    UPROPERTY() UInputAction* JumpAction;
+    UPROPERTY() UInputAction* CrouchAction;
     UPROPERTY() UInputAction* RunAction;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;

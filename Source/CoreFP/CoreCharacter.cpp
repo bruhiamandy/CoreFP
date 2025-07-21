@@ -2,6 +2,8 @@
 
 
 #include "CoreCharacter.h"
+
+#include "CoreController.h"
 #include "CoreUserSettings.h"
 
 #include "Camera/CameraComponent.h"
@@ -20,11 +22,25 @@ ACoreCharacter::ACoreCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
     
     static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCClassFinder(
-        TEXT("/Game/Inputs/IMC_Default.IMC_Default"));
+        TEXT("/Game/Inputs/IMC_Character.IMC_Character"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> MCamAClassFinder(
+        TEXT("/Game/Inputs/IA_MoveCam.IA_MoveCam"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> MChrAClassFinder(
+        TEXT("/Game/Inputs/IA_MoveChr.IA_MoveChr"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> JumpAClassFinder(
+        TEXT("/Game/Inputs/IA_Jump.IA_Jump"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> CrouchAClassFinder(
+        TEXT("/Game/Inputs/IA_Crouch.IA_Crouch"));
+    static ConstructorHelpers::FObjectFinder<UCurveFloat> CrouchCurveClassFinder(
+        TEXT("/Game/Blueprints/Curves/C_Crouch.C_Crouch"));
     static ConstructorHelpers::FObjectFinder<UInputAction> RunAClassFinder(
         TEXT("/Game/Inputs/IA_Run.IA_Run"));
     
     DefaultMappingContext = IMCClassFinder.Object;
+    MoveCamAction = MCamAClassFinder.Object;
+    MoveChrAction = MChrAClassFinder.Object;
+    JumpAction = JumpAClassFinder.Object;
+    CrouchAction = CrouchAClassFinder.Object;
     RunAction = RunAClassFinder.Object;
     
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
@@ -39,13 +55,17 @@ ACoreCharacter::ACoreCharacter() {
 	Camera->bUsePawnControlRotation = true;
 }
 
+float ACoreCharacter::GetCurrentSpeed() {
+    return GetCharacterMovement()->MaxWalkSpeed;
+}
+
 // Called when the game starts or when spawned
 void ACoreCharacter::BeginPlay() {
 	Super::BeginPlay();
     UCoreUserSettings* Settings = Cast<UCoreUserSettings>(UCoreUserSettings::GetCoreUserSettings());
     Camera->SetFieldOfView(Settings->GetCameraFOV());
     
-    if (APlayerController* PlayerController = Cast<APlayerController>(Controller)) {
+    if (ACoreController* PlayerController = Cast<ACoreController>(Controller)) {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
                 Subsystem->AddMappingContext(DefaultMappingContext, 0);
         }
@@ -70,24 +90,87 @@ void ACoreCharacter::Tick(float DeltaTime) {
 void ACoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent)){
+        EIC->BindAction(MoveCamAction, ETriggerEvent::Triggered, this, &ACoreCharacter::MoveCam);
+        EIC->BindAction(MoveChrAction, ETriggerEvent::Triggered, this, &ACoreCharacter::MoveChr);
+
+        EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &ACoreCharacter::BeginJump);
+        EIC->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACoreCharacter::EndJump);
+
         EIC->BindAction(RunAction, ETriggerEvent::Started, this, &ACoreCharacter::BeginRun);
         EIC->BindAction(RunAction, ETriggerEvent::Canceled, this, &ACoreCharacter::EndRun);
     }
 }
 
+float ACoreCharacter::GetSensitivity() {
+    return UCoreUserSettings::GetCoreUserSettings()->GetSensitivity();
+}
+
+float ACoreCharacter::GetSensitivityYaw() {
+    return UCoreUserSettings::GetCoreUserSettings()->GetSensitivityYaw();
+}
+
+float ACoreCharacter::GetSensitivityPitch() {
+    return UCoreUserSettings::GetCoreUserSettings()->GetSensitivityPitch();
+}
+
+void ACoreCharacter::MoveCam(const FInputActionValue& Value) {
+    FVector2D CamVec = Value.Get<FVector2D>();
+
+    if (Controller != nullptr) {
+        AddControllerYawInput(CamVec.X * (GetSensitivityYaw() * 100.0f) * GetWorld()->GetDeltaSeconds());
+        AddControllerPitchInput(CamVec.Y * (GetSensitivityPitch() * 100.0f) * GetWorld()->GetDeltaSeconds());
+    }
+}
+
+void ACoreCharacter::MoveChr(const FInputActionValue& Value) {
+    FVector2D MoveVec = Value.Get<FVector2D>();
+
+    if (Controller != nullptr) {
+        AddMovementInput(GetActorRightVector(), MoveVec.X);
+        AddMovementInput(GetActorForwardVector(), MoveVec.Y);        
+    }
+}
+
+void ACoreCharacter::BeginJump() {
+    FVector CamLoc = GetCamera()->GetComponentLocation();
+    FVector End = CamLoc + FVector(0.0f, 0.0f, 96.0f);
+
+    FHitResult HitResult;
+    FCollisionQueryParams TraceParams;
+    TraceParams.AddIgnoredActor(this);
+    TraceParams.bTraceComplex = true;
+    TraceParams.MobilityType = EQueryMobilityType::Any;
+
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, End, ECC_Visibility, TraceParams)) {
+        GetCharacterMovement()->JumpZVelocity = GetVelocity().Size();
+        JumpMaxHoldTime = 0.0f;
+    } else {
+        GetCharacterMovement()->JumpZVelocity = 420.0f;
+        JumpMaxHoldTime = 0.025f;
+    }
+	
+    Jump();
+}
+
+void ACoreCharacter::EndJump() {
+    StopJumping();
+}
+
 void ACoreCharacter::BeginRun() {
+    UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::BeginRun execute"));
     if(!IsCrouching()) {
         if(!GetCharacterMovement()->IsFalling()) {
-            GetCharacterMovement()->MaxWalkSpeed = GetSprintSpeed();
+            UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::BeginRun success"));
+            GetCharacterMovement()->MaxWalkSpeed = 100000.0f;
             SetRunning(true);
         }
     }
-    
-    EndRun();
 }
 
 void ACoreCharacter::EndRun() {
+    UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::EndRun execute"));
     if(IsRunning()) {
+        UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::EndRun success"));
         GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
         SetRunning(false);
     }
