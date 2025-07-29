@@ -34,15 +34,15 @@ public:
 
 	void MoveCam(const FInputActionValue& Value);
 	void MoveChr(const FInputActionValue& Value);
-	void BeginJump();
-	void EndJump();
+	UFUNCTION() void BeginJump();
+	UFUNCTION() void EndJump();
 
-	void BeginRun();
-	void EndRun();
+	UFUNCTION() void BeginRun();
+	UFUNCTION(BlueprintCallable) void EndRun();
 
-	static float GetSensitivity();
-	static float GetSensitivityYaw();
-	static float GetSensitivityPitch();
+	UFUNCTION() static float GetSensitivity();
+	UFUNCTION() static float GetSensitivityYaw();
+	UFUNCTION() static float GetSensitivityPitch();
     
 protected:
 	virtual void BeginPlay() override;
