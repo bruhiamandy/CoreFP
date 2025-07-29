@@ -62,8 +62,7 @@ float ACoreCharacter::GetCurrentSpeed() {
 // Called when the game starts or when spawned
 void ACoreCharacter::BeginPlay() {
 	Super::BeginPlay();
-    UCoreUserSettings* Settings = Cast<UCoreUserSettings>(UCoreUserSettings::GetCoreUserSettings());
-    Camera->SetFieldOfView(FMath::Clamp(Settings->GetCameraFOV(), 75.0f, 120.0f));
+    Camera->SetFieldOfView(FMath::Clamp(GetCameraFOV(), 75.0f, 120.0f));
     
     if (ACoreController* PlayerController = Cast<ACoreController>(Controller)) {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
@@ -174,4 +173,9 @@ void ACoreCharacter::EndRun() {
         GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
         SetRunning(false);
     }
+}
+
+float ACoreCharacter::GetCameraFOV() {
+    UCoreUserSettings* Settings = Cast<UCoreUserSettings>(UCoreUserSettings::GetCoreUserSettings());
+    return Settings->GetCameraFOV();
 }

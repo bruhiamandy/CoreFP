@@ -32,6 +32,9 @@ public:
     UFUNCTION(BlueprintPure) bool IsRunning() { return bIsRunning; }
     UFUNCTION() void SetRunning(bool bRunning) { bIsRunning = bRunning; }
 
+	UFUNCTION(BlueprintPure) bool IsZooming() { return bIsZooming; }
+	UFUNCTION(BlueprintCallable) void SetZooming(bool bZooming) { bIsZooming = bZooming; }
+
 	void MoveCam(const FInputActionValue& Value);
 	void MoveChr(const FInputActionValue& Value);
 	UFUNCTION() void BeginJump();
@@ -39,6 +42,8 @@ public:
 
 	UFUNCTION() void BeginRun();
 	UFUNCTION(BlueprintCallable) void EndRun();
+
+	UFUNCTION(BlueprintPure) static float GetCameraFOV();
 
 	UFUNCTION() static float GetSensitivity();
 	UFUNCTION() static float GetSensitivityYaw();
@@ -65,7 +70,8 @@ private:
     UPROPERTY() float WalkSpeed = 250.0f;
     UPROPERTY() float SprintSpeed = 500.0f;
     UPROPERTY() float CrouchSpeed = 125.0f;
-    
+	
     UPROPERTY() bool bIsCrouching;
     UPROPERTY() bool bIsRunning;
+	UPROPERTY() bool bIsZooming;
 };
