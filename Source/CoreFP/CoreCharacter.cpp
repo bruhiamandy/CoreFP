@@ -63,7 +63,7 @@ float ACoreCharacter::GetCurrentSpeed() {
 void ACoreCharacter::BeginPlay() {
 	Super::BeginPlay();
     UCoreUserSettings* Settings = Cast<UCoreUserSettings>(UCoreUserSettings::GetCoreUserSettings());
-    Camera->SetFieldOfView(Settings->GetCameraFOV());
+    Camera->SetFieldOfView(FMath::Clamp(Settings->GetCameraFOV(), 75.0f, 120.0f));
     
     if (ACoreController* PlayerController = Cast<ACoreController>(Controller)) {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer())) {
@@ -97,7 +97,7 @@ void ACoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
         EIC->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACoreCharacter::EndJump);
 
         EIC->BindAction(RunAction, ETriggerEvent::Started, this, &ACoreCharacter::BeginRun);
-        EIC->BindAction(RunAction, ETriggerEvent::Canceled, this, &ACoreCharacter::EndRun);
+        EIC->BindAction(RunAction, ETriggerEvent::Completed, this, &ACoreCharacter::EndRun);
     }
 }
 
@@ -161,7 +161,7 @@ void ACoreCharacter::BeginRun() {
     if(!IsCrouching()) {
         if(!GetCharacterMovement()->IsFalling()) {
             UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::BeginRun success"));
-            GetCharacterMovement()->MaxWalkSpeed = 100000.0f;
+            GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed() * 3.0f;
             SetRunning(true);
         }
     }

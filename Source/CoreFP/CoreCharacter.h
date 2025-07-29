@@ -60,6 +60,7 @@ private:
     UPROPERTY() UInputAction* RunAction;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;
+	UPROPERTY() float CameraFOV;
     
     UPROPERTY() float WalkSpeed = 250.0f;
     UPROPERTY() float SprintSpeed = 500.0f;
