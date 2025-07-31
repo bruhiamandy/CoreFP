@@ -16,6 +16,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
 
 // Sets default values
 ACoreCharacter::ACoreCharacter() {
@@ -29,12 +30,15 @@ ACoreCharacter::ACoreCharacter() {
         TEXT("/Game/Inputs/IA_MoveChr.IA_MoveChr"));
     static ConstructorHelpers::FObjectFinder<UInputAction> JumpAClassFinder(
         TEXT("/Game/Inputs/IA_Jump.IA_Jump"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> RunAClassFinder(
+        TEXT("/Game/Inputs/IA_Run.IA_Run"));
     static ConstructorHelpers::FObjectFinder<UInputAction> CrouchAClassFinder(
         TEXT("/Game/Inputs/IA_Crouch.IA_Crouch"));
     static ConstructorHelpers::FObjectFinder<UCurveFloat> CrouchCurveClassFinder(
         TEXT("/Game/Blueprints/Curves/C_Crouch.C_Crouch"));
-    static ConstructorHelpers::FObjectFinder<UInputAction> RunAClassFinder(
-        TEXT("/Game/Inputs/IA_Run.IA_Run"));
+
+    static ConstructorHelpers::FObjectFinder<UInputAction> UseClassFinder(
+        TEXT("/Game/Inputs/IA_Use.IA_Use"));
     
     DefaultMappingContext = IMCClassFinder.Object;
     MoveCamAction = MCamAClassFinder.Object;
@@ -42,6 +46,7 @@ ACoreCharacter::ACoreCharacter() {
     JumpAction = JumpAClassFinder.Object;
     CrouchAction = CrouchAClassFinder.Object;
     RunAction = RunAClassFinder.Object;
+    UseAction = UseClassFinder.Object;
     
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
     
@@ -53,6 +58,8 @@ ACoreCharacter::ACoreCharacter() {
 	Camera->SetupAttachment(GetCapsuleComponent());
 	Camera->SetRelativeLocation(FVector(-10.0f, 0.0f, 70.0f));
 	Camera->bUsePawnControlRotation = true;
+
+    SetPhysicsHandle(CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle")));
 }
 
 float ACoreCharacter::GetCurrentSpeed() {
@@ -83,6 +90,8 @@ void ACoreCharacter::Landed(const FHitResult& Hit) {
 void ACoreCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
+    TraceLineForGrab(FName("BaseTrace"), GrabDistance, ECC_Camera, InteractHitResult);
+    GrabLocation();
 }
 
 // Called to bind functionality to input
@@ -97,6 +106,8 @@ void ACoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
         EIC->BindAction(RunAction, ETriggerEvent::Started, this, &ACoreCharacter::BeginRun);
         EIC->BindAction(RunAction, ETriggerEvent::Completed, this, &ACoreCharacter::EndRun);
+
+        EIC->BindAction(UseAction, ETriggerEvent::Started, this, &ACoreCharacter::ToggleGrab);
     }
 }
 
@@ -134,13 +145,13 @@ void ACoreCharacter::BeginJump() {
     FVector CamLoc = GetCamera()->GetComponentLocation();
     FVector End = CamLoc + FVector(0.0f, 0.0f, 96.0f);
 
-    FHitResult HitResult;
+    FHitResult JumpHitResult;
     FCollisionQueryParams TraceParams;
     TraceParams.AddIgnoredActor(this);
     TraceParams.bTraceComplex = true;
     TraceParams.MobilityType = EQueryMobilityType::Any;
 
-    if (GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, End, ECC_Visibility, TraceParams)) {
+    if (GetWorld()->LineTraceSingleByChannel(JumpHitResult, CamLoc, End, ECC_Visibility, TraceParams)) {
         GetCharacterMovement()->JumpZVelocity = GetVelocity().Size();
         JumpMaxHoldTime = 0.0f;
     } else {
@@ -173,6 +184,93 @@ void ACoreCharacter::EndRun() {
         GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
         SetRunning(false);
     }
+}
+
+void ACoreCharacter::SetHitComponent(UPrimitiveComponent* NewHitComponent) {
+    HitComponent = NewHitComponent;
+}
+
+void ACoreCharacter::SetPhysicsHandle(UPhysicsHandleComponent* NewPhysicsHandle) {
+    PhysicsHandle = NewPhysicsHandle;
+}
+
+void ACoreCharacter::SetInteractHitResult(FHitResult NewHitResult) {
+    InteractHitResult = NewHitResult;
+}
+
+void ACoreCharacter::BeginInteract() {
+    if (!bIsGrabbing) {
+        /*if (IsValid(GetHitResult().GetActor()) && GetHitResult().GetActor()->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass())) {
+            //IInteractionInterface::Execute_Use(GetHitResult().GetActor());
+        } */if (IsValid(GetInteractHitResult().GetComponent())) {
+            if (GetInteractHitResult().GetComponent()->IsSimulatingPhysics()) {
+                SetHitComponent(GetInteractHitResult().GetComponent());
+                PhysicsHandle->GrabComponentAtLocationWithRotation(GetHitComponent(), NAME_None, GetHitComponent()->GetComponentLocation(), GetHitComponent()->GetRelativeRotation());
+                if (UCoreUserSettings::GetCoreUserSettings()->GetShadowQuality() < 2) {
+                    GetPhysicsHandle()->GetGrabbedComponent()->SetCastShadow(false);
+                }
+                bIsGrabbing = IsValid(PhysicsHandle->GetGrabbedComponent());
+            }
+        }
+    }
+}
+
+void ACoreCharacter::GrabLocation() {
+    if (bIsGrabbing) {
+        GetPhysicsHandle()->SetTargetLocationAndRotation(Camera->GetComponentLocation() + (Camera->GetForwardVector() * GetGrabDistance()), GetActorRotation());
+        if (IsValid(GetHitComponent())) {
+            GetHitComponent()->SetRelativeRotation(FRotator(0, GetHitComponent()->GetRelativeRotation().Yaw, 0), false, nullptr);
+        }
+    }
+}
+
+void ACoreCharacter::StopGrab() {
+    if (bIsGrabbing) {
+        GetPhysicsHandle()->GetGrabbedComponent()->SetCastShadow(true);
+        GetPhysicsHandle()->ReleaseComponent();
+        bIsGrabbing = IsValid(GetPhysicsHandle()->GetGrabbedComponent());
+    }
+}
+
+void ACoreCharacter::ToggleGrab() {
+    if (bIsGrabbing) {
+        StopGrab();
+        UE_LOG(LogTemp, Warning, TEXT("Stop Grabbing"));
+    } else {
+        BeginInteract();
+        UE_LOG(LogTemp, Warning, TEXT("Grabbing"));
+    }
+}
+
+void ACoreCharacter::ShootGrab() {
+    if (bIsGrabbing) {
+        const float Strength = 1000.0f;
+        const FVector Velocity = GetCamera()->GetForwardVector() * Strength;
+
+        GetPhysicsHandle()->GetGrabbedComponent()->SetCastShadow(true);
+        GetPhysicsHandle()->GetGrabbedComponent()->AddImpulse(Velocity, NAME_None, true);
+        GetPhysicsHandle()->ReleaseComponent();
+        
+        bIsGrabbing = IsValid(GetPhysicsHandle()->GetGrabbedComponent());
+    }
+}
+
+bool ACoreCharacter::TraceLineForGrab(FName TraceTag, float Distance, ECollisionChannel Channel, FHitResult& OutResult) {
+    UWorld* World = GetWorld();
+    if (!bIsGrabbing && IsValid(World)) {
+        FVector Start = GetCamera()->GetComponentLocation();
+        FVector End = (GetCamera()->GetForwardVector() * GetGrabDistance()) + Start;
+
+        FCollisionQueryParams TraceParams;
+        TraceParams.AddIgnoredActor(this);
+        TraceParams.TraceTag = TraceTag;
+        TraceParams.bTraceComplex = true;
+        TraceParams.MobilityType = EQueryMobilityType::Dynamic;
+		
+        return World->LineTraceSingleByChannel(OutResult, Start, End, Channel, TraceParams);
+    }
+
+    return false;
 }
 
 float ACoreCharacter::GetCameraFOV() {

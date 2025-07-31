@@ -43,6 +43,25 @@ public:
 	UFUNCTION() void BeginRun();
 	UFUNCTION(BlueprintCallable) void EndRun();
 
+	UFUNCTION(BlueprintCallable) void SetHitComponent(UPrimitiveComponent* NewHitComponent);
+	UFUNCTION(BlueprintPure) UPrimitiveComponent* GetHitComponent() { return HitComponent; }
+
+	UFUNCTION(BlueprintCallable) void SetPhysicsHandle(UPhysicsHandleComponent* NewPhysicsHandle);
+	UFUNCTION(BlueprintPure) UPhysicsHandleComponent* GetPhysicsHandle() { return PhysicsHandle; }
+
+	UFUNCTION(BlueprintCallable) void SetInteractHitResult(FHitResult NewHitResult);
+	UFUNCTION(BlueprintPure) FHitResult GetInteractHitResult() { return InteractHitResult; }
+
+	UFUNCTION(BlueprintPure) float GetGrabDistance() { return GrabDistance; }
+
+	UFUNCTION() void BeginInteract();
+	UFUNCTION() void GrabLocation();
+	UFUNCTION() void StopGrab();
+	UFUNCTION() void ToggleGrab();
+	UFUNCTION() void ShootGrab();
+
+	UFUNCTION() bool TraceLineForGrab(FName TraceTag, float Distance, ECollisionChannel Channel, FHitResult& OutResult);
+
 	UFUNCTION(BlueprintPure) static float GetCameraFOV();
 
 	UFUNCTION() static float GetSensitivity();
@@ -63,6 +82,11 @@ private:
     UPROPERTY() UInputAction* JumpAction;
     UPROPERTY() UInputAction* CrouchAction;
     UPROPERTY() UInputAction* RunAction;
+	UPROPERTY() UInputAction* UseAction;
+
+	UPROPERTY(VisibleAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true")) FHitResult InteractHitResult;
+	UPROPERTY(VisibleAnywhere, Category = "Components", meta = (AllowPrivateAccess = "true")) UPrimitiveComponent* HitComponent;
+	UPROPERTY(VisibleAnywhere, Category = "Components", meta = (AllowPrivateAccess = "true")) UPhysicsHandleComponent* PhysicsHandle;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true")) UCameraComponent* Camera;
 	UPROPERTY() float CameraFOV;
@@ -70,8 +94,11 @@ private:
     UPROPERTY() float WalkSpeed = 250.0f;
     UPROPERTY() float SprintSpeed = 500.0f;
     UPROPERTY() float CrouchSpeed = 125.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true")) float GrabDistance = 256.0f;
 	
     UPROPERTY() bool bIsCrouching;
+	UPROPERTY() bool bIsGrabbing;
     UPROPERTY() bool bIsRunning;
 	UPROPERTY() bool bIsZooming;
 };
