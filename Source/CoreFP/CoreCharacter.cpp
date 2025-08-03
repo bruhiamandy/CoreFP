@@ -5,6 +5,7 @@
 
 #include "CoreController.h"
 #include "CoreHealthComponent.h"
+#include "CoreInteractionInterface.h"
 #include "CoreUserSettings.h"
 
 #include "Camera/CameraComponent.h"
@@ -175,10 +176,8 @@ void ACoreCharacter::EndJump() {
 }
 
 void ACoreCharacter::BeginRun() {
-    UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::BeginRun execute"));
     if(!IsCrouching()) {
         if(!GetCharacterMovement()->IsFalling()) {
-            UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::BeginRun success"));
             GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed() * 3.0f;
             SetRunning(true);
         }
@@ -186,9 +185,7 @@ void ACoreCharacter::BeginRun() {
 }
 
 void ACoreCharacter::EndRun() {
-    UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::EndRun execute"));
     if(IsRunning()) {
-        UE_LOG(LogTemp, Log, TEXT("ACoreCharacter::EndRun success"));
         GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
         SetRunning(false);
     }
@@ -208,9 +205,9 @@ void ACoreCharacter::SetInteractHitResult(FHitResult NewHitResult) {
 
 void ACoreCharacter::BeginInteract() {
     if (!bIsGrabbing) {
-        /*if (IsValid(GetHitResult().GetActor()) && GetHitResult().GetActor()->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass())) {
-            //IInteractionInterface::Execute_Use(GetHitResult().GetActor());
-        } */if (IsValid(GetInteractHitResult().GetComponent())) {
+        if (IsValid(GetInteractHitResult().GetActor()) && GetInteractHitResult().GetActor()->GetClass()->ImplementsInterface(UCoreInteractionInterface::StaticClass())) {
+            ICoreInteractionInterface::Execute_Use(GetInteractHitResult().GetActor());
+        } else if (IsValid(GetInteractHitResult().GetComponent())) {
             if (GetInteractHitResult().GetComponent()->IsSimulatingPhysics()) {
                 SetHitComponent(GetInteractHitResult().GetComponent());
                 PhysicsHandle->GrabComponentAtLocationWithRotation(GetHitComponent(), NAME_None, GetHitComponent()->GetComponentLocation(), GetHitComponent()->GetRelativeRotation());
@@ -243,10 +240,8 @@ void ACoreCharacter::StopGrab() {
 void ACoreCharacter::ToggleGrab() {
     if (bIsGrabbing) {
         StopGrab();
-        UE_LOG(LogTemp, Warning, TEXT("Stop Grabbing"));
     } else {
         BeginInteract();
-        UE_LOG(LogTemp, Warning, TEXT("Grabbing"));
     }
 }
 
