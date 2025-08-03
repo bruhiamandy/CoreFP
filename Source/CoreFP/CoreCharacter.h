@@ -11,6 +11,8 @@ struct FInputActionValue;
 
 class UCameraComponent;
 
+class UCoreHealthComponent;
+
 UCLASS()
 class COREFP_API ACoreCharacter : public ACharacter
 {
@@ -83,7 +85,10 @@ private:
     UPROPERTY() UInputAction* CrouchAction;
     UPROPERTY() UInputAction* RunAction;
 	UPROPERTY() UInputAction* UseAction;
+	UPROPERTY() UInputAction* ShootAction;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true")) UCoreHealthComponent* Health;
+	
 	UPROPERTY(VisibleAnywhere, Category = "Character", meta = (AllowPrivateAccess = "true")) FHitResult InteractHitResult;
 	UPROPERTY(VisibleAnywhere, Category = "Components", meta = (AllowPrivateAccess = "true")) UPrimitiveComponent* HitComponent;
 	UPROPERTY(VisibleAnywhere, Category = "Components", meta = (AllowPrivateAccess = "true")) UPhysicsHandleComponent* PhysicsHandle;

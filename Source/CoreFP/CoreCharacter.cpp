@@ -4,6 +4,7 @@
 #include "CoreCharacter.h"
 
 #include "CoreController.h"
+#include "CoreHealthComponent.h"
 #include "CoreUserSettings.h"
 
 #include "Camera/CameraComponent.h"
@@ -16,6 +17,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 
 // Sets default values
@@ -39,6 +41,8 @@ ACoreCharacter::ACoreCharacter() {
 
     static ConstructorHelpers::FObjectFinder<UInputAction> UseClassFinder(
         TEXT("/Game/Inputs/IA_Use.IA_Use"));
+    static ConstructorHelpers::FObjectFinder<UInputAction> ShootClassFinder(
+        TEXT("/Game/Inputs/IA_Shoot.IA_Shoot"));
     
     DefaultMappingContext = IMCClassFinder.Object;
     MoveCamAction = MCamAClassFinder.Object;
@@ -47,6 +51,7 @@ ACoreCharacter::ACoreCharacter() {
     CrouchAction = CrouchAClassFinder.Object;
     RunAction = RunAClassFinder.Object;
     UseAction = UseClassFinder.Object;
+    ShootAction = ShootClassFinder.Object;
     
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
     
@@ -60,6 +65,7 @@ ACoreCharacter::ACoreCharacter() {
 	Camera->bUsePawnControlRotation = true;
 
     SetPhysicsHandle(CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle")));
+    Health = CreateDefaultSubobject<UCoreHealthComponent>(TEXT("ActorHealth"));
 }
 
 float ACoreCharacter::GetCurrentSpeed() {
@@ -84,6 +90,7 @@ void ACoreCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 
 void ACoreCharacter::Landed(const FHitResult& Hit) {
 	Super::Landed(Hit);
+    UGameplayStatics::ApplyDamage(this, Health->CalcFallDamage(GetVelocity().Size(), 1000, 0.05), nullptr, this, UDamageType::StaticClass());
 }
 
 // Called every frame
@@ -108,6 +115,7 @@ void ACoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
         EIC->BindAction(RunAction, ETriggerEvent::Completed, this, &ACoreCharacter::EndRun);
 
         EIC->BindAction(UseAction, ETriggerEvent::Started, this, &ACoreCharacter::ToggleGrab);
+        EIC->BindAction(ShootAction, ETriggerEvent::Started, this, &ACoreCharacter::ShootGrab);
     }
 }
 
